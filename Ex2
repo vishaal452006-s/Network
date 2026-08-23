@@ -1,0 +1,97 @@
+Add Binary:
+char* addBinary(char* a, char* b) {
+    int lenA = strlen(a);
+    int lenB = strlen(b);
+
+    int maxLen = (lenA > lenB) ? lenA : lenB;
+
+    char *result = (char *)malloc(maxLen + 2);
+
+    int i = lenA - 1;
+    int j = lenB - 1;
+    int k = maxLen;
+    int carry = 0;
+
+    result[maxLen + 1] = '\0';
+
+    while (i >= 0 || j >= 0 || carry) {
+        int sum = carry;
+
+        if (i >= 0)
+            sum += a[i--] - '0';
+
+        if (j >= 0)
+            sum += b[j--] - '0';
+
+        result[k--] = (sum % 2) + '0';
+        carry = sum / 2;
+    }
+
+    return result + k + 1;
+}
+Binary Numbers with alternating bits :
+bool hasAlternatingBits(int n) {
+    int arr[100];
+    int i = 0;
+
+    if (n == 0) {
+        return true;
+    }
+
+    while (n > 0) {
+        arr[i] = n % 2;
+        n = n / 2;
+        i++;
+    }
+
+    for (int j = 0; j < i - 1; j++) {
+        if (arr[j] == arr[j + 1]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+Bitwise ORs of subarrays:
+int compare(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int subarrayBitwiseORs(int* arr, int arrSize) {
+    int* total_set = (int*)malloc(arrSize * 32 * sizeof(int));
+    int total_count = 0;
+    int prev_set[32];
+    int prev_size = 0;
+    
+    for (int i = 0; i < arrSize; i++) {
+        int curr_set[32];
+        int curr_size = 0;
+        curr_set[curr_size++] = arr[i];
+        total_set[total_count++] = arr[i];
+        for (int j = 0; j < prev_size; j++) {
+            int val = prev_set[j] | arr[i];
+            if (curr_size == 0 || curr_set[curr_size - 1] != val) {
+                curr_set[curr_size++] = val;
+                total_set[total_count++] = val;
+            }
+        }
+        for (int j = 0; j < curr_size; j++) {
+            prev_set[j] = curr_set[j];
+        }
+        prev_size = curr_size;
+    }
+    if (total_count == 0) {
+        free(total_set);
+        return 0;
+    }
+    qsort(total_set, total_count, sizeof(int), compare);
+    int unique_count = 1;
+    for (int i = 1; i < total_count; i++) {
+        if (total_set[i] != total_set[i - 1]) {
+            total_set[unique_count++] = total_set[i];
+        }
+    }
+    
+    free(total_set);
+    return unique_count;
+}
