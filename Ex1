@@ -1,1 +1,73 @@
+Find complement:
+int findComplement(int num) {
+        unsigned int result = ~0;
+    while (num & result) {
+        result <<= 1;
+    }
+    return ~result ^ num;
+}
 
+Counting Bits:
+int* countBits(int n, int* returnSize) {
+    *returnSize = n + 1;
+    int* ans = (int*)malloc((*returnSize) * sizeof(int));
+    ans[0] = 0;
+    for (int i = 1; i <= n; i++) {
+        ans[i] = ans[i >> 1] + (i & 1);
+    }
+    
+    return ans;
+}
+Maximum xor of two numbers in an array
+int nextNodeId;
+int trieNodes[6500000][2]; 
+
+void insert(int num) {
+    int curr = 0; 
+    for (int i = 30; i >= 0; i--) {
+        int bit = (num >> i) & 1;
+        if (trieNodes[curr][bit] == 0) {
+            trieNodes[curr][bit] = nextNodeId;
+            trieNodes[nextNodeId][0] = 0;
+            trieNodes[nextNodeId][1] = 0;
+            nextNodeId++;
+        }
+        curr = trieNodes[curr][bit];
+    }
+}
+int getMaxXOR(int num) {
+    int curr = 0;
+    int maxXOR = 0;
+    for (int i = 30; i >= 0; i--) {
+        int bit = (num >> i) & 1;
+        int toggleBit = 1 - bit; 
+        
+        if (trieNodes[curr][toggleBit] != 0) {
+            maxXOR |= (1 << i); 
+            curr = trieNodes[curr][toggleBit];
+        } else {
+            curr = trieNodes[curr][bit]; 
+        }
+    }
+    return maxXOR;
+}
+
+int findMaximumXOR(int* nums, int numsSize) {
+    if (numsSize < 2) return 0;
+    nextNodeId = 1;
+    trieNodes[0][0] = 0;
+    trieNodes[0][1] = 0;
+    
+    int maxResult = 0;
+    insert(nums[0]);
+    
+    for (int i = 1; i < numsSize; i++) {
+        int currentMax = getMaxXOR(nums[i]);
+        if (currentMax > maxResult) {
+            maxResult = currentMax;
+        }
+        insert(nums[i]);
+    }
+    
+    return maxResult;
+}
