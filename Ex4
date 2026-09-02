@@ -1,0 +1,333 @@
+815. Bus Routes
+#define MAX_STOP 1000000
+
+int numBusesToDestination(int** routes, int routesSize, int* routesColSize, int source, int target) {
+    if (source == target) {
+        return 0;
+    }
+    int maxStop = 0;
+    for (int i = 0; i < routesSize; i++) {
+        for (int j = 0; j < routesColSize[i]; j++) {
+            if (routes[i][j] > maxStop) {
+                maxStop = routes[i][j];
+            }
+        }
+    }
+    if (source > maxStop || target > maxStop) {
+        return -1;
+    }
+    int* head = (int*)malloc((maxStop + 1) * sizeof(int));
+    memset(head, -1, (maxStop + 1) * sizeof(int));
+
+    int totalElements = 0;
+    for (int i = 0; i < routesSize; i++) {
+        totalElements += routesColSize[i];
+    }
+
+    int* next = (int*)malloc(totalElements * sizeof(int));
+    int* routeIds = (int*)malloc(totalElements * sizeof(int));
+    int edgeCount = 0;
+
+    for (int i = 0; i < routesSize; i++) {
+        for (int j = 0; j < routesColSize[i]; j++) {
+            int stop = routes[i][j];
+            routeIds[edgeCount] = i;
+            next[edgeCount] = head[stop];
+            head[stop] = edgeCount++;
+        }
+    }
+    int* queue = (int*)malloc((maxStop + 1) * sizeof(int));
+    int front = 0, rear = 0;
+
+    char* visitedRoutes = (char*)calloc(routesSize, sizeof(char));
+    char* visitedStops = (char*)calloc(maxStop + 1, sizeof(char));
+
+    queue[rear++] = source;
+    visitedStops[source] = 1;
+    int busCount = 0;
+    while (front < rear) {
+        int levelSize = rear - front;
+        for (int i = 0; i < levelSize; i++) {
+            int currentStop = queue[front++];
+
+            if (currentStop == target) {
+                free(head); free(next); free(routeIds);
+                free(queue); free(visitedRoutes); free(visitedStops);
+                return busCount;
+            }
+
+            int edge = head[currentStop];
+            while (edge != -1) {
+                int routeId = routeIds[edge];
+                if (!visitedRoutes[routeId]) {
+                    visitedRoutes[routeId] = 1;
+
+                    for (int j = 0; j < routesColSize[routeId]; j++) {
+                        int nextStop = routes[routeId][j];
+                        if (!visitedStops[nextStop]) {
+                            visitedStops[nextStop] = 1;
+                            queue[rear++] = nextStop;
+                        }
+                    }
+                }
+                edge = next[edge];
+            }
+        }
+        busCount++;
+    }
+
+    free(head); free(next); free(routeIds);
+    free(queue); free(visitedRoutes); free(visitedStops);
+    return -1;
+}
+
+1466. Reorder Routes to Make All Paths Lead to the City Zero
+struct Edge {
+    int to;
+    int originalDir;
+    int next;
+};
+
+int minReorder(int n, int** connections, int connectionsSize, int* connectionsColSize) {
+    int* head = (int*)malloc(n * sizeof(int));
+    memset(head, -1, n * sizeof(int));
+    
+    struct Edge* edges = (struct Edge*)malloc(2 * connectionsSize * sizeof(struct Edge));
+    int edgeCount = 0;
+    
+    for (int i = 0; i < connectionsSize; i++) {
+        int u = connections[i][0];
+        int v = connections[i][1];
+        
+        edges[edgeCount].to = v;
+        edges[edgeCount].originalDir = 1; 
+        edges[edgeCount].next = head[u];
+        head[u] = edgeCount++;
+        
+        edges[edgeCount].to = u;
+        edges[edgeCount].originalDir = 0;
+        edges[edgeCount].next = head[v];
+        head[v] = edgeCount++;
+    }
+    
+    int* queue = (int*)malloc(n * sizeof(int));
+    char* visited = (char*)calloc(n, sizeof(char));
+    int front = 0, rear = 0;
+    int reorderCount = 0;
+    
+    queue[rear++] = 0;
+    visited[0] = 1;
+    
+    while (front < rear) {
+        int curr = queue[front++];
+        
+        int e = head[curr];
+        while (e != -1) {
+            int neighbor = edges[e].to;
+            if (!visited[neighbor]) {
+                visited[neighbor] = 1;
+                reorderCount += edges[e].originalDir;
+                queue[rear++] = neighbor;
+            }
+            e = edges[e].next;
+        }
+    }
+    
+    free(head);
+    free(edges);
+    free(queue);
+    free(visited);
+    
+    return reorderCount;
+}
+
+743. Network Delay Time
+#include <stdlib.h>
+#include <string.h>
+
+#define INF 0x3f3f3f3f
+
+struct Edge {
+    int to;
+    int weight;
+    int next;
+};
+
+int networkDelayTime(int** times, int timesSize, int* timesColSize, int n, int k) {
+    int* head = (int*)malloc((n + 1) * sizeof(int));
+    memset(head, -1, (n + 1) * sizeof(int));
+    
+    struct Edge* edges = (struct Edge*)malloc(timesSize * sizeof(struct Edge));
+    for (int i = 0; i < timesSize; i++) {
+        int u = times[i][0];
+        int v = times[i][1];
+        int w = times[i][2];
+        
+        edges[i].to = v;
+        edges[i].weight = w;
+        edges[i].next = head[u];
+        head[u] = i;
+    }
+    
+    int* dist = (int*)malloc((n + 1) * sizeof(int));
+    memset(dist, 0x3f, (n + 1) * sizeof(int));
+    char* visited = (char*)calloc(n + 1, sizeof(char));
+    
+    dist[k] = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        int u = -1;
+        int minDist = INF;
+        
+        for (int j = 1; j <= n; j++) {
+            if (!visited[j] && dist[j] < minDist) {
+                minDist = dist[j];
+                u = j;
+            }
+        }
+        
+        if (u == -1) {
+            break;
+        }
+        
+        visited[u] = 1;
+        
+        int e = head[u];
+        while (e != -1) {
+            int v = edges[e].to;
+            int w = edges[e].weight;
+            
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+            }
+            e = edges[e].next;
+        }
+    }
+    
+    int maxDelay = 0;
+    for (int i = 1; i <= n; i++) {
+        if (dist[i] == INF) {
+            free(head);
+            free(edges);
+            free(dist);
+            free(visited);
+            return -1;
+        }
+        if (dist[i] > maxDelay) {
+            maxDelay = dist[i];
+        }
+    }
+    
+    free(head);
+    free(edges);
+    free(dist);
+    free(visited);
+    
+    return maxDelay;
+}
+1631. Path With Minimum Effort:
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#define INF 0x3f3f3f3f
+
+struct Cell {
+    int r;
+    int c;
+    int effort;
+};
+
+void swap(struct Cell* a, struct Cell* b) {
+    struct Cell temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void push(struct Cell* heap, int* heapSize, int r, int c, int effort) {
+    heap[*heapSize].r = r;
+    heap[*heapSize].c = c;
+    heap[*heapSize].effort = effort;
+    int i = (*heapSize)++;
+    while (i > 0) {
+        int p = (i - 1) / 2;
+        if (heap[p].effort <= heap[i].effort) break;
+        swap(&heap[p], &heap[i]);
+        i = p;
+    }
+}
+
+struct Cell pop(struct Cell* heap, int* heapSize) {
+    struct Cell res = heap[0];
+    heap[0] = heap[--(*heapSize)];
+    int i = 0;
+    while (2 * i + 1 < *heapSize) {
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+        int smallest = left;
+        if (right < *heapSize && heap[right].effort < heap[left].effort) {
+            smallest = right;
+        }
+        if (heap[i].effort <= heap[smallest].effort) break;
+        swap(&heap[i], &heap[smallest]);
+        i = smallest;
+    }
+    return res;
+}
+
+int minimumEffortPath(int** heights, int heightsSize, int* heightsColSize) {
+    int rows = heightsSize;
+    int cols = heightsColSize[0];
+
+    int** eff = (int**)malloc(rows * sizeof(int*));
+    for (int i = 0; i < rows; i++) {
+        eff[i] = (int*)malloc(cols * sizeof(int));
+        memset(eff[i], 0x3f, cols * sizeof(int));
+    }
+
+    struct Cell* heap = (struct Cell*)malloc(rows * cols * sizeof(struct Cell));
+    int heapSize = 0;
+
+    eff[0][0] = 0;
+    push(heap, &heapSize, 0, 0, 0);
+
+    int dr[] = {-1, 1, 0, 0};
+    int dc[] = {0, 0, -1, 1};
+
+    while (heapSize > 0) {
+        struct Cell curr = pop(heap, &heapSize);
+        int r = curr.r;
+        int c = curr.c;
+        int d = curr.effort;
+
+        if (r == rows - 1 && c == cols - 1) {
+            for (int i = 0; i < rows; i++) free(eff[i]);
+            free(eff);
+            free(heap);
+            return d;
+        }
+
+        if (d > eff[r][c]) continue;
+
+        for (int i = 0; i < 4; i++) {
+            int nr = r + dr[i];
+            int nc = c + dc[i];
+
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                int diff = abs(heights[r][c] - heights[nr][nc]);
+                int maxEff = d > diff ? d : diff;
+
+                if (maxEff < eff[nr][nc]) {
+                    eff[nr][nc] = maxEff;
+                    push(heap, &heapSize, nr, nc, maxEff);
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < rows; i++) free(eff[i]);
+    free(eff);
+    free(heap);
+    return 0;
+}
+
